@@ -43,7 +43,7 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-  
+
     // MongoDB All User Collection
     const userCollection = client.db("learningSchool").collection("users");
     const classCollection = client.db("learningSchool").collection("classes");
@@ -58,7 +58,29 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       // console.log(process.env.ACCESS_TOKEN_SECRET)
       res.send({ token })
-  });
+    });
+
+
+    // Warning: use verifyJWT before using verifyAdmin from db
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      if (user?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
+    // Warning: use verifyJWT before using verifyInstructor from db
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
 
 
 
