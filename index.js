@@ -134,7 +134,39 @@ async function run() {
       const user = await userCollection.findOne(query);
       const result = { admin: user?.role === 'instructor' }
       res.send(result);
-    }) 
+    })
+
+    // setting  a user role to admin
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    });
+
+    // setting  a user role to instructor
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    });
 
 
     // Send a ping to confirm a successful connection
