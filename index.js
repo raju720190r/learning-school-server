@@ -109,6 +109,33 @@ async function run() {
       res.send(result);
     });
 
+    // get admin users by email
+    app.get('/users/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
+    })
+    // get Instructor users by email
+    app.get('/users/instructor/:email', verifyJWT, verifyInstructor, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      const result = { admin: user?.role === 'instructor' }
+      res.send(result);
+    }) 
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
