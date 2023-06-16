@@ -56,7 +56,7 @@ async function run() {
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' })
+      const token = jwt.sign(user,process.env.ACCESS_TOKEN, { expiresIn: '2h' })
       // console.log(process.env.ACCESS_TOKEN_SECRET)
       res.send({ token })
     });
@@ -112,8 +112,7 @@ async function run() {
 
     // get admin users by email    
 
-    // Need downline  verifyJWT, verifyAdmin,
-    app.get('/users/admin/:email', async (req, res) => {
+    app.get('/users/admin/:email',verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
@@ -125,8 +124,7 @@ async function run() {
       res.send(result);
     })
     // get Instructor users by email
-    // Need downline  verifyJWT, verifyInstructor,
-    app.get('/users/instructor/:email', async (req, res) => {
+    app.get('/users/instructor/:email',verifyJWT, verifyInstructor, async (req, res) => {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
@@ -288,6 +286,57 @@ async function run() {
       const result = await userCollection.find(query).toArray()
       res.send(result)
     })
+     // getting the first 6 popular classes sort by number of class taken
+     app.get('/instructors/popular', async (req, res) => {
+        
+      const pipeline = [
+        {
+            $match: { role: 'instructor' } // Filter by role 'instructor'
+        },
+          {
+              $lookup: {
+                  from: "classes",
+                  localField: "email",
+                  foreignField: "instructorEmail",
+                  as: "classes",
+              },
+          },
+          {
+              $project: {
+                  _id: 0,
+                  name: 1,
+                  photoURL: 1,
+                  numberOfStudents: {
+                      $cond: {
+                          if: { $isArray: "$classes" },
+                          then: { $sum: "$classes.numberOfStudents" },
+                          else: 0,
+                      },
+                  },
+                  numberOfClasses: {
+                      $cond: {
+                          if: { $isArray: "$classes" },
+                          then: { $size: "$classes" },
+                          else: 0,
+                      },
+                  },
+                  classes: {
+                      $cond: {
+                          if: { $isArray: "$classes" },
+                          then: { $arrayElemAt: ["$classes.name", 0] },
+                          else: "",
+                      },
+                  },
+              },
+          },
+          { $sort: { numberOfStudents: -1 } },
+          { $limit: 6 },
+      ];
+
+      const instructors = await userCollection.aggregate(pipeline).toArray();
+      res.send(instructors);
+  });
+
 
 
 
