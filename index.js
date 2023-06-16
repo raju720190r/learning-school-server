@@ -191,7 +191,24 @@ async function run() {
       res.send(result);
     });
 
-    // 2 STEPS BAKI ASE MAJKHANE
+
+    // getting the first 6 popular classes sort by number of enrolled students
+    app.get('/popular-classes', async (req, res) => {
+      try {
+        const popularClasses = await classCollection.find().sort({ numberOfStudents: -1 }).limit(6).toArray();
+        res.send(popularClasses);
+      } catch (err) {
+        console.error(err);
+        res.status(400).send('Internal server error');
+      }
+    });
+
+    // get classes according to the instructor email
+    app.get('/classes/:email', verifyJWT, verifyInstructor, async (req, res) => {
+      const email = req.params.email;
+      const result = await classCollection.find({ instructorEmail: email }).toArray();
+      res.send(result);
+    });
 
 
     // changing class  to approved put method
