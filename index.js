@@ -236,6 +236,55 @@ async function run() {
       res.send(result);
     });
 
+    // inserting feedback to a class
+    app.put('/classes/feedback/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const feedback = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: feedback.inputValue
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // ! selected classes related apis
+    // post selected class to database
+    app.post('/classes/selected', async (req, res) => {
+      const selectedClass = req.body;
+      const result = await selectedCollection.insertOne(selectedClass);
+      res.send(result);
+    });
+
+    // get selected class by email
+    app.get('/classes/selected/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { userEmail: email }
+      const result = await selectedCollection.find(query).toArray();
+      res.send(result);
+    });
+    // get selected class by id
+    app.get('/classes/get/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedCollection.findOne(query);
+      res.send(result);
+    });
+
+    // deleting a selected class by id
+    app.delete('/classes/selected/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await selectedCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
