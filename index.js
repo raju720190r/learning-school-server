@@ -286,6 +286,7 @@ async function run() {
       const result = await userCollection.find(query).toArray()
       res.send(result)
     })
+
      // getting the first 6 popular classes sort by number of class taken
      app.get('/instructors/popular', async (req, res) => {
         
@@ -341,7 +342,13 @@ async function run() {
 
 
 
-
+// getting enrolled class by email
+        app.get('/enrolled/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await enrolledCollection.find(query).toArray();
+            res.send(result);
+        });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
