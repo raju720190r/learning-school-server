@@ -281,6 +281,14 @@ async function run() {
       res.send(result);
     });
 
+    // ! instructor related apis
+    // get all instructors by role
+    app.get('/instructors', async (req, res) => {
+      const query = { role: 'instructor' }
+      const result = await userCollection.find(query).toArray()
+      res.send(result)
+    })
+
 
 
 
