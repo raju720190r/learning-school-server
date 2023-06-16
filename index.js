@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -27,7 +28,7 @@ const verifyJWT = (req, res, next) => {
 }
 
 // Mongodb Connection 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.D_USER}:${process.env.D_PASS}@cluster0.9k9az0h.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -55,7 +56,7 @@ async function run() {
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' })
       // console.log(process.env.ACCESS_TOKEN_SECRET)
       res.send({ token })
     });
@@ -109,21 +110,23 @@ async function run() {
       res.send(result);
     });
 
-    // get admin users by email
-    app.get('/users/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+    // get admin users by email    
+
+    // Need downline  verifyJWT, verifyAdmin,
+    app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
         res.send({ admin: false })
       }
-
       const query = { email: email }
       const user = await userCollection.findOne(query);
       const result = { admin: user?.role === 'admin' }
       res.send(result);
     })
     // get Instructor users by email
-    app.get('/users/instructor/:email', verifyJWT, verifyInstructor, async (req, res) => {
+    // Need downline  verifyJWT, verifyInstructor,
+    app.get('/users/instructor/:email', async (req, res) => {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
@@ -166,6 +169,54 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
 
+    });
+
+    // ! class related api
+    // for getting all the classes
+    app.get('/classes', verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
+    // posting new class
+    app.post('/classes', async (req, res) => {
+      const classData = req.body;
+      const result = await classCollection.insertOne(classData);
+      res.send(result);
+    });
+
+    // show all the approved classes
+    app.get('/approved-classes', async (req, res) => {
+      const result = await classCollection.find({ status: 'approved' }).toArray();
+      res.send(result);
+    });
+
+    // 2 STEPS BAKI ASE MAJKHANE
+
+
+    // changing class  to approved put method
+    app.put('/classes/approved/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    // changing class to deny , put method
+    app.put('/classes/denied/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'denied'
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
 
